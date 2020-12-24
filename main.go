@@ -22,6 +22,14 @@ func BiasOfAnEstimator(variates []float64) (float64, float64) {
 	D := sum / float64(n-1)
 	return E, D
 }
+func FischerVariance(l float64, m float64) float64 {
+	if m > 4 {
+		return 2 * m * m * (l + m - 2) / (l * (m - 2) * (m - 2) * (m - 4))
+	} else {
+		return 0.0
+	}
+
+}
 
 func main() {
 	a01 := 296454621
@@ -32,16 +40,24 @@ func main() {
 	K := 64
 	n := 10000
 	mNormal := 0
+	mLogistic := 2.0
+	kLogistic := 3.0
+	lFischer := 5
+	mFischer := 3
 	N := 48
 	sSquareNormal := 1
 	logrus.Info("M: ", M)
-	//aSequence2 := *generators.LinearCongruential(a02, c2, M, n)
-	//aSequence1SpecialSize := *generators.LinearCongruential(a01, c1, M, n+K)
-	//sequenceByMacLarenMarsaglia := *generators.MacLarenMarsaglia(aSequence1SpecialSize, aSequence2, K, n)
+	aSequence2 := *generators.LinearCongruential(a02, c2, M, n)
+	aSequence1SpecialSize := *generators.LinearCongruential(a01, c1, M, n+K)
+	sequenceByMacLarenMarsaglia := *generators.MacLarenMarsaglia(aSequence1SpecialSize, aSequence2, K, n)
 	aSequence22 := *generators.LinearCongruential(a02, c2, M, n+N)
 	aSequence1SpecialSize2 := *generators.LinearCongruential(a01, c1, M, n+K+N)
 	sequenceByMacLarenMarsaglia2 := *generators.MacLarenMarsaglia(aSequence1SpecialSize2, aSequence22, K, n+N)
 	normalDistributionVariates := distributions.NormalDistributionVariates(N, float64(mNormal), float64(sSquareNormal), sequenceByMacLarenMarsaglia2)
+	aSequence23 := *generators.LinearCongruential(a02, c2, M, n+lFischer)
+	aSequence1SpecialSize3 := *generators.LinearCongruential(a01, c1, M, n+K+lFischer)
+	sequenceByMacLarenMarsaglia3 := *generators.MacLarenMarsaglia(aSequence1SpecialSize3, aSequence23, K, n+lFischer)
+
 	logrus.Info("First 10 variates of normal distribution")
 	for i := 0; i < 10; i++ {
 		logrus.Info(normalDistributionVariates[i])
@@ -52,6 +68,34 @@ func main() {
 	unbiasedNormalEV, unbiasedNormalV := BiasOfAnEstimator(normalDistributionVariates)
 	logrus.Info("Bias of an estimator expected value: ", unbiasedNormalEV)
 	logrus.Info("Bias of an estimator variance: ", unbiasedNormalV)
+
+	logisticDistributionVariates := distributions.LogisticDistributionVariates(mLogistic, kLogistic, sequenceByMacLarenMarsaglia)
+	logrus.Info("First 10 variates of normal distribution")
+	for i := 0; i < 10; i++ {
+		logrus.Info(logisticDistributionVariates[i])
+
+	}
+	logrus.Info("Expected value: ", mLogistic)
+	logrus.Info("Variance: ", math.Pow(kLogistic/math.Sqrt(3)*math.Pi, 2.0))
+	unbiasedLogisticEV, unbiasedLogisticV := BiasOfAnEstimator(logisticDistributionVariates)
+	logrus.Info("Bias of an estimator expected value: ", unbiasedLogisticEV)
+	logrus.Info("Bias of an estimator variance: ", unbiasedLogisticV)
+
+	squareHiVariates1 := distributions.SquareHiDistributionVariates(lFischer, sequenceByMacLarenMarsaglia3)
+	squareHiVariates2 := distributions.SquareHiDistributionVariates(mFischer, sequenceByMacLarenMarsaglia3)
+
+	fischerDistributionVariates := distributions.FischerDistributionVariates(float64(lFischer), float64(mFischer), squareHiVariates1, squareHiVariates2)
+	logrus.Info("First 10 variates of fischer distribution")
+	for i := 0; i < 10; i++ {
+		logrus.Info(fischerDistributionVariates[i])
+	}
+	logrus.Info("Expected value: ", float64(mFischer)/float64(mFischer-2))
+	logrus.Info("M should be more then 4")
+	logrus.Info("Variance: ", FischerVariance(float64(lFischer), float64(mFischer)))
+	logrus.Info("Variance reverse(l, m): ", FischerVariance(float64(mFischer), float64(lFischer)))
+	unbiasedFischerEV, unbiasedFischerV := BiasOfAnEstimator(fischerDistributionVariates)
+	logrus.Info("Bias of an estimator expected value: ", unbiasedFischerEV)
+	logrus.Info("Bias of an estimator variance: ", unbiasedFischerV)
 
 	//x := [16]float64{1.406,0.799, 0.288, 1.010, 0.208, 1.406, 0.872, 0.671, 0.457, 0.327, 0.248, 0.327, 2.112, 1.351, 0.744, 0.669}
 	//tmp_sum :=0.0

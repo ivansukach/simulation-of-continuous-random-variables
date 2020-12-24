@@ -8,18 +8,13 @@ func one(x float64) float64 {
 	}
 	return 1.0
 }
-func BinomialDistributionVariates(m int, p float64, basicVariate []float64) *[]float64 {
-	n := len(basicVariate) - m
-	binomialVariates := make([]float64, n)
-	var tmp float64
+func LogisticDistributionVariates(m float64, k float64, basicVariate []float64) []float64 {
+	n := len(basicVariate)
+	logisticVariates := make([]float64, n)
 	for i := 0; i < n; i++ {
-		tmp = 0.0
-		for j := 0; j < m; j++ {
-			tmp += one(p - basicVariate[j+i])
-		}
-		binomialVariates[i] = tmp
+		logisticVariates[i] = m + k*math.Log(basicVariate[i]/(1-basicVariate[i]))
 	}
-	return &binomialVariates
+	return logisticVariates
 }
 func NormalDistributionVariates(N int, m float64, sSquare float64, basicVariate []float64) []float64 {
 	n := len(basicVariate) - N
@@ -38,4 +33,25 @@ func NormalDistributionVariates(N int, m float64, sSquare float64, basicVariate 
 		normalVariates[i] = m + tmp*s
 	}
 	return normalVariates
+}
+func SquareHiDistributionVariates(m int, basicVariate []float64) []float64 {
+	n := len(basicVariate) - m
+	squareHiVariates := make([]float64, n)
+	var tmp float64
+	for i := 0; i < n; i++ {
+		tmp = 0.0
+		for j := 0; j < m; j++ {
+			tmp += basicVariate[j+i] * basicVariate[j+i]
+		}
+		squareHiVariates[i] = tmp
+	}
+	return squareHiVariates
+}
+func FischerDistributionVariates(l float64, m float64, squareHiVariates1 []float64, squareHiVariates2 []float64) []float64 {
+	n := len(squareHiVariates1)
+	fischerVariates := make([]float64, n)
+	for i := 0; i < n; i++ {
+		fischerVariates[i] = (squareHiVariates1[i] / l) / (squareHiVariates2[i] / m)
+	}
+	return fischerVariates
 }
