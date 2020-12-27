@@ -7,7 +7,7 @@ import (
 	"math"
 )
 
-func BiasOfAnEstimator(variates []float64) (float64, float64) {
+func EmpiricalEstimates(variates []float64) (float64, float64) {
 	n := len(variates)
 	logrus.Info("n=", n)
 	sum := 0.0
@@ -30,7 +30,31 @@ func FischerVariance(l float64, m float64) float64 {
 	}
 
 }
-
+func normalDistributionInfo(variates []float64) {
+	n := len(variates)
+	p := [6]int{0, 0, 0, 0, 0, 0}
+	for i := 0; i < n; i++ {
+		if variates[i] < -2.0 && variates[i] >= -3.0 {
+			p[0] += 1
+		} else if variates[i] < -1.0 && variates[i] >= -2.0 {
+			p[1] += 1
+		} else if variates[i] < 0.0 && variates[i] >= -1.0 {
+			p[2] += 1
+		} else if variates[i] < 1.0 && variates[i] >= 0.0 {
+			p[3] += 1
+		} else if variates[i] < 2.0 && variates[i] >= 1.0 {
+			p[4] += 1
+		} else if variates[i] < 3.0 && variates[i] >= 2.0 {
+			p[5] += 1
+		}
+	}
+	logrus.Info("-3 <= x < -2 :", p[0])
+	logrus.Info("-2 <= x < -1 :", p[1])
+	logrus.Info("-1 <= x < 0 :", p[2])
+	logrus.Info("0 <= x < 1 :", p[3])
+	logrus.Info("1 <= x < 2 :", p[4])
+	logrus.Info("2 <= x < 3 :", p[5])
+}
 func main() {
 	a01 := 296454621
 	a02 := 302711857
@@ -53,21 +77,27 @@ func main() {
 	aSequence22 := *generators.LinearCongruential(a02, c2, M, n+N)
 	aSequence1SpecialSize2 := *generators.LinearCongruential(a01, c1, M, n+K+N)
 	sequenceByMacLarenMarsaglia2 := *generators.MacLarenMarsaglia(aSequence1SpecialSize2, aSequence22, K, n+N)
-	normalDistributionVariates := distributions.NormalDistributionVariates(N, float64(mNormal), float64(sSquareNormal), sequenceByMacLarenMarsaglia2)
-	aSequence23 := *generators.LinearCongruential(a02, c2, M, n+lFischer)
-	aSequence1SpecialSize3 := *generators.LinearCongruential(a01, c1, M, n+K+lFischer)
-	sequenceByMacLarenMarsaglia3 := *generators.MacLarenMarsaglia(aSequence1SpecialSize3, aSequence23, K, n+lFischer)
+	aSequence23 := *generators.LinearCongruential(a02, c2, M, n+lFischer+N)
+	aSequence1SpecialSize3 := *generators.LinearCongruential(a01, c1, M, n+K+lFischer+N)
+	sequenceByMacLarenMarsaglia3 := *generators.MacLarenMarsaglia(aSequence1SpecialSize3, aSequence23, K, n+lFischer+N)
+	aSequence24 := *generators.LinearCongruential(a02, c2, M, n+mFischer+N)
+	aSequence1SpecialSize4 := *generators.LinearCongruential(a01, c1, M, n+K+mFischer+N)
+	sequenceByMacLarenMarsaglia4 := *generators.MacLarenMarsaglia(aSequence1SpecialSize4, aSequence24, K, n+mFischer+N)
 
+	normalDistributionVariates := distributions.NormalDistributionVariates(N, float64(mNormal), float64(sSquareNormal), sequenceByMacLarenMarsaglia2)
+	normalDistributionVariates2 := distributions.NormalDistributionVariates(N, float64(mNormal), float64(sSquareNormal), sequenceByMacLarenMarsaglia3)
+	normalDistributionVariates3 := distributions.NormalDistributionVariates(N, float64(mNormal), float64(sSquareNormal), sequenceByMacLarenMarsaglia4)
 	logrus.Info("First 10 variates of normal distribution")
 	for i := 0; i < 10; i++ {
 		logrus.Info(normalDistributionVariates[i])
 
 	}
+
 	logrus.Info("Expected value: ", mNormal)
 	logrus.Info("Variance: ", sSquareNormal)
-	unbiasedNormalEV, unbiasedNormalV := BiasOfAnEstimator(normalDistributionVariates)
-	logrus.Info("Bias of an estimator expected value: ", unbiasedNormalEV)
-	logrus.Info("Bias of an estimator variance: ", unbiasedNormalV)
+	empiricalNormalEV, empiricalNormalV := EmpiricalEstimates(normalDistributionVariates)
+	logrus.Info("Empirical estimates of expected value: ", empiricalNormalEV)
+	logrus.Info("Empirical estimates of variance: ", empiricalNormalV)
 
 	logisticDistributionVariates := distributions.LogisticDistributionVariates(mLogistic, kLogistic, sequenceByMacLarenMarsaglia)
 	logrus.Info("First 10 variates of normal distribution")
@@ -77,12 +107,28 @@ func main() {
 	}
 	logrus.Info("Expected value: ", mLogistic)
 	logrus.Info("Variance: ", math.Pow(kLogistic/math.Sqrt(3)*math.Pi, 2.0))
-	unbiasedLogisticEV, unbiasedLogisticV := BiasOfAnEstimator(logisticDistributionVariates)
-	logrus.Info("Bias of an estimator expected value: ", unbiasedLogisticEV)
-	logrus.Info("Bias of an estimator variance: ", unbiasedLogisticV)
+	empiricalLogisticEV, empiricalLogisticV := EmpiricalEstimates(logisticDistributionVariates)
+	logrus.Info("Empirical estimates of expected value: ", empiricalLogisticEV)
+	logrus.Info("Empirical estimates of variance: ", empiricalLogisticV)
 
-	squareHiVariates1 := distributions.SquareHiDistributionVariates(lFischer, sequenceByMacLarenMarsaglia3)
-	squareHiVariates2 := distributions.SquareHiDistributionVariates(mFischer, sequenceByMacLarenMarsaglia3)
+	logrus.Info("Normal distribution 1 for square hi")
+	normalDistributionInfo(normalDistributionVariates2)
+	logrus.Info("Normal distribution 2 for square hi")
+	normalDistributionInfo(normalDistributionVariates3)
+	empiricalNormal2EV, empiricalNormal2V := EmpiricalEstimates(normalDistributionVariates2)
+	logrus.Info("Empirical estimates of normal expected value: ", empiricalNormal2EV)
+	logrus.Info("Empirical estimates of normal variance: ", empiricalNormal2V)
+	empiricalNormal3EV, empiricalNormal3V := EmpiricalEstimates(normalDistributionVariates3)
+	logrus.Info("Empirical estimates of normal expected value: ", empiricalNormal3EV)
+	logrus.Info("Empirical estimates of normal variance: ", empiricalNormal3V)
+
+	squareHiVariates1 := distributions.SquareHiDistributionVariates(lFischer, empiricalNormal2V, empiricalNormal2EV, normalDistributionVariates2)
+	squareHiVariates2 := distributions.SquareHiDistributionVariates(mFischer, empiricalNormal3V, empiricalNormal3EV, normalDistributionVariates3)
+
+	//warning: big variate of x^2 distribution
+	empiricalSquareHi1EV, empiricalSquareHi1V := EmpiricalEstimates(squareHiVariates1)
+	logrus.Info("Empirical estimates of square-hi expected value: ", empiricalSquareHi1EV)
+	logrus.Info("Empirical estimates of square-hi variance: ", empiricalSquareHi1V)
 
 	fischerDistributionVariates := distributions.FischerDistributionVariates(float64(lFischer), float64(mFischer), squareHiVariates1, squareHiVariates2)
 	logrus.Info("First 10 variates of fischer distribution")
@@ -93,24 +139,7 @@ func main() {
 	logrus.Info("M should be more then 4")
 	logrus.Info("Variance: ", FischerVariance(float64(lFischer), float64(mFischer)))
 	logrus.Info("Variance reverse(l, m): ", FischerVariance(float64(mFischer), float64(lFischer)))
-	unbiasedFischerEV, unbiasedFischerV := BiasOfAnEstimator(fischerDistributionVariates)
-	logrus.Info("Bias of an estimator expected value: ", unbiasedFischerEV)
-	logrus.Info("Bias of an estimator variance: ", unbiasedFischerV)
-
-	//x := [16]float64{1.406,0.799, 0.288, 1.010, 0.208, 1.406, 0.872, 0.671, 0.457, 0.327, 0.248, 0.327, 2.112, 1.351, 0.744, 0.669}
-	//tmp_sum :=0.0
-	//for i:=0; i<16; i++{
-	//	tmp_sum += x[i]*math.Sqrt(x[i]*x[i]+math.Sqrt(x[i]))
-	//}
-	//logrus.Info("Result: ", tmp_sum/16.0)
-	//binomialDistributionVariates := *distributions.BinomialDistributionVariates(mBinomial, pBinomial, sequenceByMacLarenMarsaglia2)
-	//logrus.Info("First 10 variates of binomial distribution")
-	//for i := 0; i < 10; i++ {
-	//	logrus.Info(binomialDistributionVariates[i])
-	//}
-	//logrus.Info("Expected value: ", float64(mBinomial)*pBinomial)
-	//logrus.Info("Variance: ", float64(mBinomial)*pBinomial*(1-pBinomial))
-	//unbiasedBinomialEV, unbiasedBinomialV := BiasOfAnEstimator(binomialDistributionVariates)
-	//logrus.Info("Bias of an estimator expected value: ", unbiasedBinomialEV)
-	//logrus.Info("Bias of an estimator variance: ", unbiasedBinomialV)
+	empiricalFischerEV, empiricalFischerV := EmpiricalEstimates(fischerDistributionVariates)
+	logrus.Info("Empirical estimates of expected value: ", empiricalFischerEV)
+	logrus.Info("Empirical estimates of variance: ", empiricalFischerV)
 }

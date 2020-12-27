@@ -2,12 +2,6 @@ package distributions
 
 import "math"
 
-func one(x float64) float64 {
-	if x <= 0 {
-		return 0.0
-	}
-	return 1.0
-}
 func LogisticDistributionVariates(m float64, k float64, basicVariate []float64) []float64 {
 	n := len(basicVariate)
 	logisticVariates := make([]float64, n)
@@ -34,14 +28,14 @@ func NormalDistributionVariates(N int, m float64, sSquare float64, basicVariate 
 	}
 	return normalVariates
 }
-func SquareHiDistributionVariates(m int, basicVariate []float64) []float64 {
-	n := len(basicVariate) - m
+func SquareHiDistributionVariates(m int, variance float64, ev float64, normalDistributionVariate []float64) []float64 {
+	n := len(normalDistributionVariate) - m
 	squareHiVariates := make([]float64, n)
 	var tmp float64
 	for i := 0; i < n; i++ {
 		tmp = 0.0
 		for j := 0; j < m; j++ {
-			tmp += basicVariate[j+i] * basicVariate[j+i]
+			tmp += math.Pow(normalDistributionVariate[j+i]-ev, 2.0) / variance
 		}
 		squareHiVariates[i] = tmp
 	}
