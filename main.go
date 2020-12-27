@@ -100,7 +100,7 @@ func main() {
 	logrus.Info("Empirical estimates of variance: ", empiricalNormalV)
 
 	logisticDistributionVariates := distributions.LogisticDistributionVariates(mLogistic, kLogistic, sequenceByMacLarenMarsaglia)
-	logrus.Info("First 10 variates of normal distribution")
+	logrus.Info("First 10 variates of logistic distribution")
 	for i := 0; i < 10; i++ {
 		logrus.Info(logisticDistributionVariates[i])
 
